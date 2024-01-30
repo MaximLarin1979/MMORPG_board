@@ -1,6 +1,13 @@
 from django.contrib.auth.models import User
-from .models import Category, Post, Reply
+from django.core.mail import EmailMultiAlternatives
+from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
+
+from .filters import PostFilter
+from .forms import PostForm, ReplyForm, SendForm
+from .models import Post, Reply
+from MMORPG_board import settings
 
 
 class PostsList(ListView):
@@ -27,3 +34,45 @@ class PostDetail(DetailView):
         context['is_logged'] = self.request.user.is_authenticated
         context['replys'] = replies_by_post_id
         return context
+
+
+class PostCreate(CreateView):
+    form_class = PostForm
+    model = Post
+    template_name = 'post_create_template.html'
+    context_object_name = 'post_create'
+    success_url = '/posts/'
+
+    def form_valid(self, form):
+        post = form.save(commit=False)
+        post.post_author = self.request.user
+        post.save()
+        return super().form_valid(form)
+
+
+class PostEdit(UpdateView):
+    form_class = PostForm
+    model = Post
+    template_name = 'post_edit.html'
+    context_object_name = 'post_edit'
+    success_url = '/posts/'
+
+    def get_object(self, **kwargs):
+        id = self.kwargs.get('pk')
+        return Post.objects.get(pk=id)
+
+
+class ReplyAdd(CreateView):
+    form_class = ReplyForm
+    model = Reply
+    template_name = 'reply_add.html'
+    context_object_name = 'reply_create'
+    success_url = '/posts/'
+
+    def form_valid(self, form):
+        reply = form.save(commit=False)
+        reply.author = self.request.user
+        reply.post = get_object_or_404(Post, id=self.kwargs['pk'])
+        form.save()
+        return redirect('post', reply.post.pk)
+
