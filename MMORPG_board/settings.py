@@ -16,7 +16,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'MMORPG_board_app',
+    'MMORPG_board_app.apps.MmorpgBoardAppConfig',
     'members',
     'django_filters',
 ]
